@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150306160536) do
+ActiveRecord::Schema.define(version: 20150326191958) do
 
   create_table "events", force: true do |t|
     t.string   "name"
@@ -27,11 +27,37 @@ ActiveRecord::Schema.define(version: 20150306160536) do
   add_index "events_locations", ["event_id"], name: "index_events_locations_on_event_id"
   add_index "events_locations", ["location_id"], name: "index_events_locations_on_location_id"
 
+  create_table "events_participants", id: false, force: true do |t|
+    t.integer "participant_id"
+    t.integer "event_id"
+  end
+
+  add_index "events_participants", ["event_id"], name: "index_events_participants_on_event_id"
+  add_index "events_participants", ["participant_id"], name: "index_events_participants_on_participant_id"
+
   create_table "locations", force: true do |t|
     t.string   "name"
     t.string   "tag"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "participants", force: true do |t|
+    t.string   "email"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "rosters", force: true do |t|
+    t.integer  "event_id"
+    t.integer  "location_id"
+    t.integer  "participant_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "rosters", ["event_id"], name: "index_rosters_on_event_id"
+  add_index "rosters", ["location_id"], name: "index_rosters_on_location_id"
+  add_index "rosters", ["participant_id"], name: "index_rosters_on_participant_id"
 
 end

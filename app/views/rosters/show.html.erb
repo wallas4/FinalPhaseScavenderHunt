@@ -1,0 +1,19 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Event:</strong>
+  <%= @roster.event %>
+</p>
+
+<p>
+  <strong>Location:</strong>
+  <%= @roster.location %>
+</p>
+
+<p>
+  <strong>Participant:</strong>
+  <%= @roster.participant %>
+</p>
+
+<%= link_to 'Edit', edit_roster_path(@roster) %> |
+<%= link_to 'Back', rosters_path %>

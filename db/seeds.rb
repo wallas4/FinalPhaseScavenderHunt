@@ -18,3 +18,8 @@ end
         tag: (('A'..'Z').to_a + ('a'..'z').to_a + (0..9).to_a).shuffle[0..7].join,
     )
 end
+
+# create three Participants
+3.times do |i|
+    Participant.create(email: "participant#{i + 1}@email.com")
+end
