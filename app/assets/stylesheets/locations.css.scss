@@ -2,14 +2,14 @@
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
 
- table {
+ table.qr {
   border-width: 0;
   border-style: none;
   border-color: #0000ff;
   border-collapse: collapse;
  }
 
- td {
+ td.qr {
    border-width: 0;
    border-style: none;
    border-color: #0000ff;
