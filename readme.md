@@ -98,6 +98,7 @@ a location object using the parameters we passed in via the URL:
 def index
   @event = Event.find(params[:event_id])
   @location = Location.find_by(tag: params[:tag])
+end
 ```
 
 This allows us to use those values in the input form.  The input form is
@@ -122,3 +123,59 @@ participant email.  It should look like this:
   </div>
 <% end %>
 ```
+
+Notice that the action that is triggered upon submit is the `/success`
+action...
+
+So this time, we need to add a route for the success action.  Since we are
+visiting the `/success` URL and passing parameters via the POST method,
+we need this:
+
+`post '/success' => 'check_in#success'`
+
+## Check-in Processing
+
+But what are we going to do when a participant actually checks in?
+Basically, we need to add that location to the participant list of
+visited locations.
+
+Recall we previously set up a has_many/through relationship between the
+Participant model and Location model.  Here is where we utlize that
+model.  The result of that infrastructure was to create a separate join
+model called Roster, which mapped events, locations, and participants
+together in a single table.
+
+In other words, we are going to add a new triple as a row to the rosters
+table that looks like `<event_id, location_id, participant_id>`.  It now
+becomes apparent why we were keeping track of certain information
+throughout this process.  On the input page, we had tracked event and
+location information, which we retained through the use of the hidden
+form fields; when the participant input their email, we now had the
+missing third piece with which to complete the check-in pipeline.
+
+So, we simply want to create a new Roster entity in the database during
+execution of the success action:
+
+```
+def success
+  @event = Event.find(params[:event_id])
+  @location = Location.find(params[:location_id])
+  @participant = Participant.find_by(email: params[:email])
+
+  respond_to do |format|
+    if Roster.create(event_id: @event.id, location_id: @location.id, participant_id: @participant.id)
+      format.html { redirect_to participant_path(id: @participant.id, event_id: @event.id), 
+  	notice: 'Participant was successfully checked in.' }
+      format.json { render :show, status: :updated, participant: @participant }
+    else
+      format.html { render :new }
+      format.json { render json: @participant.errors, status: :unprocessable_entity }
+    end
+  end
+end
+```
+
+Notice we still keep track of all our information at the beginning of
+the success action, but that is really just for record keeping purposes
+in the participant show page.  The real work is being done in the
+Roster.create call...
