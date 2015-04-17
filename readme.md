@@ -179,3 +179,18 @@ Notice we still keep track of all our information at the beginning of
 the success action, but that is really just for record keeping purposes
 in the participant show page.  The real work is being done in the
 Roster.create call...
+
+## Updating the Participant show page
+
+Notice that if we successfully create a new Roster row in the database,
+we redirect to the participant show page.  We need to update that page
+to list all unvisited locations for each event that participant is a
+part of.  I will not post the verbatim code here (you will figure it
+out), but the general algorithm for doing so as discussed in class is:
+
+```
+for each event in the participant
+  for each location in that event
+    if that location is not in the participant's location list
+        display it on the page
+```
