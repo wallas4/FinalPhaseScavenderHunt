@@ -23,3 +23,19 @@ end
 3.times do |i|
     Participant.create(email: "participant#{i + 1}@email.com")
 end
+
+# associate Events and Locations as follows
+# event_id | location_id
+# ----------------------
+#     1          1
+#     1          2
+Event.find(1).locations << Location.find(1)
+Event.find(1).locations << Location.find(2)
+
+# associate Events and Participants as follows
+# event_id | participant_id
+# -------------------------
+#     1            1
+#     1            2
+Event.find(1).participants << Participant.find(1)
+Event.find(1).participants << Participant.find(2)

@@ -1,83 +1,124 @@
-# CS 270 - Spring 2015 - QR Code Scavenger Hunt - Phase 5
+# CS 270 - Spring 2015 - QR Code Scavenger Hunt - Phase 6
 
-In this phase, we will generate a QR code to display for a Location.
+In this final phase of the project, we will bring together all of the
+infrastructure we have created thus far to produce a working example of
+a scavenger hunt.
 
-## QR Code Generation
+At the core of what we want to do is to facilitate a check-in pipeline
+that allows a participant to scan a QR code, input their credentials,
+and update their list of locations still to visit.
 
-Recall that our Gemfile includes the `rqrcode` gem.  We will use this
-gem to generate a QR code for each location based on the random tag.
+The pipeline, therefore, will look like this:
 
-The QR code for each location will come into play for the Location show
-page.  Thus, we need to edit our app in several places to incorporate the QR code for
-that location.
+1. Generate the QR code on the Location show page
+2. Scan the QR code
+3. Redirect to input page
+4. Input participant credentials
+5. Add the location to the participant list of locations
+6. Redirect to participant show page, and
+7. Display locations still to visit for each participant event
 
-## Location Controller
+One thing to note before leaping in is that this entire process occurs
+within a certain context, namely, all of this happens under the auspices
+of a particular event.  So, we need to keep track of at least event
+information throughout the pipeline, and as we will see other
+information as well.
 
-First, we need to create a QR code object in the controller show action.
-We can do that as follows:
-
-`@qr = RQRCode::QRCode.new("http://#{request.host}/#{@location.tag}",
-:size => 8)`
-
-This creates an instance variable, `@qr`, that we can use in the show
-view.
-
-## Show Location Page
-
-In the `show.html.erb` file, we need to write code to display the QR
-object.  This code is given to us in the `rqrcode` documentation:
-
-```
-<table>
-  <% @qr.modules.each_index do |x| -%>
-    <tr>
-    <% @qr.modules.each_index do |y| -%>
-      <% if @qr.dark?(x,y) -%>
-        <td class="black"/>
-      <% else -%>
-        <td class="white"/>
-      <% end -%>
-    <% end -%>
-    </tr>
-  <% end -%>
-</table>
-```
-
-Thank goodness for documentation!
-
-## QR Code Styling
-
-We do need to incorporate some styling in our app to display the QR code
-properly.  Notice there is an `assets` folder in the `app` directory:
-this is where Rails maintains all the stylesheets for our application.
-
-Navigate to the `app/assets/stylesheets` directory, and you will notice
-a blank stylesheet has been created for the Location resource, called
-`locations.css.scss`.  Edit this file per the `rqrcode` documentation to
-include these styling rules:
+One other thing to note is that the logical assumption to make is that
+when an event is created, the event manager will most likely assign
+participants and locations to that event as well.  Thus, we update our
+seeds.rb file to associate Events/Locations and Events/Participants:
 
 ```
-table {
-  border-width: 0;
-  border-style: none;
-  border-color: #0000ff;
-  border-collapse: collapse;
-}
+# associate Events and Locations as follows
+# event_id | location_id
+# ----------------------
+#     1          1
+#     1          2
+Event.find(1).locations << Location.find(1)
+Event.find(1).locations << Location.find(2)
 
-td {
-   border-width: 0;
-   border-style: none;
-   border-color: #0000ff;
-   border-collapse: collapse;
-   padding: 0;
-   margin: 0;
-   width: 10px;
-   height: 10px;
-}
-
-td.black { background-color: #000; }
-td.white { background-color: #fff; }
+# associate Events and Participants as follows
+# event_id | participant_id
+# -------------------------
+#     1            1
+#     1            2
+Event.find(1).participants << Participant.find(1)
+Event.find(1).participants << Participant.find(2)
 ```
 
-Once you have completed these tasks, fire up the Rails test server and
-make sure that the Location show page displays the QR code properly.
+Reset the database, and we are ready to go!
+
+## Updating Routes and QR Code
+
+The pipeline will look like this:
+
+![Check-in Pipeline](pipeline.jpg "Check-in Pipeline")
+
+Because we need to keep track of event information, we start by
+modifying the location show page URL to contain an event id, in the form
+`http://domain/locations/event_id/location_id`.  This necessitates a
+routing update in config/routes.rb:
+
+`get 'locations/:event_id/:tag' => 'locations#show'`
+
+Now we need to pass that same information when we scan the QR code and
+redirect to the participant input page.  We incorporate that into our QR
+code object when we generate the QR code URL:
+
+```
+@event = Event.find(params[:event_id])
+@qr = RQRCode::QRCode.new("http://#{request.host}/#{@event.id}#{@location.tag}", :size => 8)
+```
+
+## Participant input page
+
+But where will we redirect to when we scan a QR code?  The easiest
+solution is to create a separate controller that handles the check-in
+processing.  In this case, when we scan a QR code, we want to redirect
+to a page that has a URL of the form
+`http://domain/event_id/location_tag`.  We will map this route to an
+index action inside this separate controller, which we will call the
+CheckIn controller:
+
+`get '/:event_id/:tag' => 'check_in#index'`
+
+This obviously necessitates creating the actual controller:
+
+`rails g controller check_in index success`
+
+We will use the success action in just a moment to handle processing
+when we click "submit" on the input page.
+
+Now, we need to keep track of not only event information, but also
+location information.  We can do so by instantiating an event object and
+a location object using the parameters we passed in via the URL:
+
+```
+def index
+  @event = Event.find(params[:event_id])
+  @location = Location.find_by(tag: params[:tag])
+```
+
+This allows us to use those values in the input form.  The input form is
+generated from the index.html.erb file in the newly create check_in view
+folder, and for our purposes will simply contain a field to type in a
+participant email.  It should look like this:
+
+```
+<h1>Check in for Location <%= @location.id %></h1>
+
+<%= form_tag('/success') do %>
+  <div class="field">
+    <%= label_tag :email %><br>
+    <%= text_field_tag :email %>
+  </div>
+
+  <%= hidden_field_tag :location_id, @location.id %>
+  <%= hidden_field_tag :event_id, @event.id %>
+
+  <div class="actions">
+    <%= submit_tag "Check in" %>
+  </div>
+<% end %>
+```
