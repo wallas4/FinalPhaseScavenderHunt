@@ -194,3 +194,15 @@ for each event in the participant
     if that location is not in the participant's location list
         display it on the page
 ```
+
+## For Further Consideration
+
+As we close out this project, there are still some areas for improvement to continue this work.
+
+- add user account/authentication
+- set up manager/participant-only roles for users
+- link locations to a third-party map service
+- add styling to the front-end
+- consider type of database underlying project (currently, sqlite3. perhaps mysql?)
+
+All these items are good areas for further study.
