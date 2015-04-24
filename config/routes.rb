@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+  get 'check_in/index'
+
+  get 'check_in/success'
+
   resources :rosters
 
   resources :participants
@@ -6,6 +10,12 @@ Rails.application.routes.draw do
   resources :locations
 
   resources :events
+  
+  get '/locations/:event_id/:id' => 'locations#show'
+  
+  get '/:event_id/:tag' => 'check_in#index'
+  
+  post '/success' => 'check_in#success'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

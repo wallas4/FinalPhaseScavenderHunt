@@ -5,5 +5,21 @@
   <%= @participant.email %>
 </p>
 
+<p>
+  <strong>Locations not visited:</strong>
+  <ul>
+        
+      <% @participant.events.each do |event| %>
+        <% event.locations.each do |location| %>
+          <% if @participant.locations.include? location  %>
+            <li>  <%= location.name %>  </li>
+          <% end %>
+        <% end %>
+      <% end %>  
+    
+  </ul>
+</p>
+
+
 <%= link_to 'Edit', edit_participant_path(@participant) %> |
 <%= link_to 'Back', participants_path %>
